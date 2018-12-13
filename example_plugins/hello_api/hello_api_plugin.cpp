@@ -1,0 +1,117 @@
+
+#include <bravo/app/application.hpp>
+#include <bravo/app/plugin.hpp>
+
+#include <sstream>
+#include <string>
+
+namespace bravo { namespace example_plugin {
+
+class hello_api_plugin : public bravo::app::plugin
+{
+   public:
+      /**
+       * The plugin requires a constructor which takes app.  This is called regardless of whether the plugin is loaded.
+       * The app parameter should be passed up to the superclass constructor.
+       */
+      hello_api_plugin( bravo::app::application* app );
+
+      /**
+       * Plugin is destroyed via base class pointer, so a virtual destructor must be provided.
+       */
+      virtual ~hello_api_plugin();
+
+      /**
+       * Every plugin needs a name.
+       */
+      virtual std::string plugin_name()const override;
+
+      /**
+       * Called when the plugin is enabled, but before the database has been created.
+       */
+      virtual void plugin_initialize( const boost::program_options::variables_map& options ) override;
+
+      /**
+       * Called when the plugin is enabled.
+       */
+      virtual void plugin_startup() override;
+
+      std::string get_message();
+
+   private:
+      bravo::app::application* _app;
+      std::string _message;
+      uint32_t _plugin_call_count = 0;
+};
+
+class hello_api_api
+{
+   public:
+      hello_api_api( const bravo::app::api_context& ctx );
+
+      /**
+       * Called immediately after the constructor.  If the API class uses enable_shared_from_this,
+       * shared_from_this() is available in this method, which allows signal handlers to be registered
+       * with app::connect_signal()
+       */
+      void on_api_startup();
+      std::string get_message();
+
+   private:
+      bravo::app::application& _app;
+      uint32_t _api_call_count = 0;
+};
+
+} }
+
+FC_API( bravo::example_plugin::hello_api_api,
+   (get_message)
+   )
+
+namespace bravo { namespace example_plugin {
+
+hello_api_plugin::hello_api_plugin( bravo::app::application* app ) : bravo::app::plugin(app) {}
+hello_api_plugin::~hello_api_plugin() {}
+
+std::string hello_api_plugin::plugin_name()const
+{
+   return "hello_api";
+}
+
+void hello_api_plugin::plugin_initialize( const boost::program_options::variables_map& options )
+{
+   _message = "hello world";
+}
+
+void hello_api_plugin::plugin_startup()
+{
+   app().register_api_factory< hello_api_api >( "hello_api_api" );
+}
+
+std::string hello_api_plugin::get_message()
+{
+   std::stringstream result;
+   result << _message << " -- users have viewed this message " << (_plugin_call_count++) << " times";
+   return result.str();
+}
+
+hello_api_api::hello_api_api( const bravo::app::api_context& ctx ) : _app(ctx.app) {}
+
+void hello_api_api::on_api_startup() {}
+
+std::string hello_api_api::get_message()
+{
+   std::stringstream result;
+   std::shared_ptr< hello_api_plugin > plug = _app.get_plugin< hello_api_plugin >( "hello_api" );
+   result << plug->get_message() << " -- you've viewed this message " << (_api_call_count++) << " times";
+   return result.str();
+}
+
+} }
+
+/**
+ * The BRAVO_DEFINE_PLUGIN() macro will define a bravo::plugin::create_hello_api_plugin()
+ * factory method which is expected by the manifest.
+ */
+
+BRAVO_DEFINE_PLUGIN( hello_api, bravo::example_plugin::hello_api_plugin )
