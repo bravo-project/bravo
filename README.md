@@ -1,4 +1,4 @@
-# Bravo - The Social Review Blockchain That Pays Its Community
+# Bravo - The Review Blockchain That Pays Its Community
 
 Welcome to the official repository for Bravo, the social review blockchain that pays its community!
 
