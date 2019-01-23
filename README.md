@@ -106,6 +106,12 @@ sudo apt-get install -y \
 	perl
 ```
 
+## Git Submodule update
+
+```
+	git submodule update --init --recursive
+```
+
 ## Build Options
 
 ```
