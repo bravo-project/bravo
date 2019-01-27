@@ -186,10 +186,15 @@ string database_fixture::generate_anon_acct_name()
 
 void database_fixture::open_database()
 {
+   open_database(8 * 1024 * 1024);
+}
+
+void database_fixture::open_database(uint64_t file_size)
+{
    if( !data_dir ) {
       data_dir = fc::temp_directory( graphene::utilities::temp_directory_path() );
       db._log_hardforks = false;
-      db.open( data_dir->path(), data_dir->path(), INITIAL_TEST_SUPPLY, 1024 * 1024 * 8, chainbase::database::read_write ); // 8 MB file for testing
+      db.open( data_dir->path(), data_dir->path(), INITIAL_TEST_SUPPLY, file_size, chainbase::database::read_write );
    }
 }
 

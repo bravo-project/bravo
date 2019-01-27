@@ -1,0 +1,8 @@
+#ifndef BRAVO_HARDFORK_0_20
+#define BRAVO_HARDFORK_0_20 20
+
+// Monday, Jan 28 2019 00:00:01 UTC
+#define BRAVO_HARDFORK_0_20_TIME 1548633601
+#define BRAVO_HARDFORK_0_20_VERSION hardfork_version( 0, 20 )
+
+#endif

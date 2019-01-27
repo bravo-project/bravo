@@ -1,8 +1,8 @@
 # Bravo - The Review Blockchain That Pays Its Community
 
-Welcome to the official repository for Bravo, the social review blockchain that pays its community!
+Welcome to the official repository for Bravo, the review blockchain that pays its community!
 
-Bravo is a blockchain based review platform with its own token called BRAVO. Bravo runs a modified version of Steem's "Proof-of-Brain" algorithm. An algorithm that distributes token-based rewards to encourage reviewers and contributors to create and curate unique content.
+Bravo is a blockchain-based consumer review platform with its own token called BRAVO. Bravo runs a modified version of Steem's "Proof-of-Brain" algorithm. An algorithm that distributes token-based rewards to encourage reviewers and contributors to create and curate unique content.
 
 Bravo is the first review blockchain to harness Steemit’s "Proof of Brain" social consensus algorithm for token allocation.
 
@@ -170,5 +170,3 @@ On Linux use the following Virtual Memory configuration for the initial sync and
 ## No Support & No Warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
