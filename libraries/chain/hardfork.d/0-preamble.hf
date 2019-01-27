@@ -48,4 +48,4 @@ FC_REFLECT( bravo::chain::hardfork_property_object,
    (next_hardfork)(next_hardfork_time) )
 CHAINBASE_SET_INDEX_TYPE( bravo::chain::hardfork_property_object, bravo::chain::hardfork_property_index )
 
-#define BRAVO_NUM_HARDFORKS 20
+#define BRAVO_NUM_HARDFORKS 19

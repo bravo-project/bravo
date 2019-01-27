@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 20, 0) )
+#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 19, 1) )
 #define BRAVO_BLOCKCHAIN_HARDFORK_VERSION     ( hardfork_version( BRAVO_BLOCKCHAIN_VERSION ) )
 
 #ifdef IS_TEST_NET
@@ -70,26 +70,20 @@
 
 #endif
 
-#ifdef FEWER_WITNESSES
+ //Bravo config
+#define BRAVO_INIT_MINED_COIN_PER_BLOCK         25
+#define BRAVO_MINED_COIN_HALVED_TIME            (1)	// 1 YEAR
+#define BRAVO_MINED_COIN_HALVED_BLOCK           (BRAVO_BLOCKS_PER_YEAR*BRAVO_MINED_COIN_HALVED_TIME)
 
-#define BRAVO_MAX_WITNESSES                   3
+#define BRAVO_BLOCK_INTERVAL                  30
+#define BRAVO_BLOCKS_PER_YEAR                 (365*24*60*60/BRAVO_BLOCK_INTERVAL)
+#define BRAVO_BLOCKS_PER_DAY                  (24*60*60/BRAVO_BLOCK_INTERVAL)
+#define BRAVO_START_VESTING_BLOCK             (BRAVO_BLOCKS_PER_DAY * 7)
+#define BRAVO_START_MINER_VOTING_BLOCK        (BRAVO_BLOCKS_PER_DAY * 30)
 
-#define BRAVO_MAX_VOTED_WITNESSES_HF0         1
-#define BRAVO_MAX_MINER_WITNESSES_HF0         1
-#define BRAVO_MAX_RUNNER_WITNESSES_HF0        1
-
-#define BRAVO_MAX_VOTED_WITNESSES_HF17        3
-#define BRAVO_MAX_MINER_WITNESSES_HF17        0
-#define BRAVO_MAX_RUNNER_WITNESSES_HF17       0
-
-#define BRAVO_HARDFORK_REQUIRED_WITNESSES     2
-
-// These values have been lowered to make testing easier
-#define BRAVO_500_USERS                       7
-#define BRAVO_5K_USERS                        8
-#define BRAVO_50K_USERS                       9
-
-#else // the usual witness requirements
+#define BRAVO_INIT_MINER_NAME                 "bravocoin"
+#define BRAVO_NUM_INIT_MINERS                 1
+#define BRAVO_INIT_TIME                       (fc::time_point_sec());
 
 #define BRAVO_MAX_WITNESSES                   21
 
@@ -102,32 +96,6 @@
 #define BRAVO_MAX_RUNNER_WITNESSES_HF17       1
 
 #define BRAVO_HARDFORK_REQUIRED_WITNESSES     17 // 17 of the 21 dpos witnesses (20 elected and 1 virtual time) required for hardfork. This guarantees 75% participation on all subsequent rounds.
-
-#define BRAVO_500_USERS                       500
-#define BRAVO_5K_USERS                        5000
-#define BRAVO_50K_USERS                       50000
-
-#endif  // FEWER_WITNESSES
-
- //Bravo config
-#define BRAVO_INIT_MINED_COIN_PER_BLOCK         25
-#define BRAVO_MINED_COIN_HALVED_TIME            (1)	// 1 YEAR
-#define BRAVO_MINED_COIN_HALVED_BLOCK           (BRAVO_BLOCKS_PER_YEAR*BRAVO_MINED_COIN_HALVED_TIME)
-
-#define BRAVO_REWARD_MULTIPLIER_AT_500          10
-#define BRAVO_REWARD_MULTIPLIER_AT_5K           100
-#define BRAVO_REWARD_MULTIPLIER_AT_50K          1000
-
-#define BRAVO_BLOCK_INTERVAL                  30
-#define BRAVO_BLOCKS_PER_YEAR                 (365*24*60*60/BRAVO_BLOCK_INTERVAL)
-#define BRAVO_BLOCKS_PER_DAY                  (24*60*60/BRAVO_BLOCK_INTERVAL)
-#define BRAVO_START_VESTING_BLOCK             (BRAVO_BLOCKS_PER_DAY * 7)
-#define BRAVO_START_MINER_VOTING_BLOCK        (BRAVO_BLOCKS_PER_DAY * 30)
-
-#define BRAVO_INIT_MINER_NAME                 "bravocoin"
-#define BRAVO_NUM_INIT_MINERS                 1
-#define BRAVO_INIT_TIME                       (fc::time_point_sec());
-
 #define BRAVO_MAX_TIME_UNTIL_EXPIRATION       (60*60) // seconds,  aka: 1 hour
 #define BRAVO_MAX_MEMO_SIZE                   2048
 #define BRAVO_MAX_PROXY_RECURSION_DEPTH       4

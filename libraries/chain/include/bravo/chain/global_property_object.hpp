@@ -96,8 +96,6 @@ namespace bravo { namespace chain {
           * their votes reduced.
           */
          uint32_t vote_power_reserve_rate = 40;
-
-         asset    current_block_reward = asset( BRAVO_INIT_MINED_COIN_PER_BLOCK, BRAVO_SYMBOL );
    };
 
    typedef multi_index_container<
@@ -129,6 +127,5 @@ FC_REFLECT( bravo::chain::dynamic_global_property_object,
              (participation_count)
              (last_irreversible_block_num)
              (vote_power_reserve_rate)
-             (current_block_reward)
           )
 CHAINBASE_SET_INDEX_TYPE( bravo::chain::dynamic_global_property_object, bravo::chain::dynamic_global_property_index )
