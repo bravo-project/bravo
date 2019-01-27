@@ -1447,15 +1447,42 @@ void database::process_comment_cashout()
 * This method will generate new coins based on current block number
 * on every specific interval the generation of new coins should be halved
 */
-asset database::get_generated_new_coins() const
+asset database::get_generated_new_coins()
 {
 	uint32_t halvings = head_block_num() / BRAVO_MINED_COIN_HALVED_BLOCK;
 	uint32_t initial_bravo_per_block = BRAVO_INIT_MINED_COIN_PER_BLOCK;
 	if (halvings > 64)
-		asset(0, BRAVO_SYMBOL);
+		return asset(0, BRAVO_SYMBOL);
 
-	return asset(initial_bravo_per_block >>= halvings, BRAVO_SYMBOL);
+	if (has_hardfork(BRAVO_HARDFORK_0_20))
+	{
+		// get the no. of users
+		const auto users = get_index< account_index >().indices().size();
+
+		if (users >= BRAVO_50K_USERS)
+		{
+			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_50K;
+		} else if (users >= BRAVO_5K_USERS)
+		{
+			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_5K;
+		} else if (users >= BRAVO_500_USERS)
+		{
+			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_500;
+		}
+	}
+
+	initial_bravo_per_block >>= halvings;
+
+	if (has_hardfork(BRAVO_HARDFORK_0_20))
+	{
+		modify(get_dynamic_global_properties(), [initial_bravo_per_block](dynamic_global_property_object& p)
+		{
+			p.current_block_reward = asset(initial_bravo_per_block, BRAVO_SYMBOL);
+		});
+	}
+	return asset(initial_bravo_per_block, BRAVO_SYMBOL);
 }
+
 /**
  *  Overall the network has an inflation rate of 102% of virtual bravo per year
  *  90% of inflation is directed to vesting shares
@@ -1545,8 +1572,11 @@ asset database::get_pow_reward()const
       return asset( 0, BRAVO_SYMBOL );
 #endif
 
-   static_assert( BRAVO_BLOCK_INTERVAL == 30, "this code assumes a 60-second time interval" );
+#ifndef FEWER_WITNESSES
    static_assert( BRAVO_MAX_WITNESSES == 21, "this code assumes 21 per round" );
+#endif
+
+   static_assert( BRAVO_BLOCK_INTERVAL == 30, "this code assumes a 30-second time interval" );
    asset percent( calc_percent_reward_per_round< BRAVO_POW_APR_PERCENT >( props.current_supply.amount ), BRAVO_SYMBOL);
    return std::max( percent, BRAVO_MIN_POW_REWARD );
 }
@@ -2866,6 +2896,9 @@ void database::init_hardforks()
    FC_ASSERT( BRAVO_HARDFORK_0_19 == 19, "Invalid hardfork configuration" );
    _hardfork_times[ BRAVO_HARDFORK_0_19 ] = fc::time_point_sec( BRAVO_HARDFORK_0_19_TIME );
    _hardfork_versions[ BRAVO_HARDFORK_0_19 ] = BRAVO_HARDFORK_0_19_VERSION;
+   FC_ASSERT( BRAVO_HARDFORK_0_20 == 20, "Invalid hardfork configuration" );
+   _hardfork_times[ BRAVO_HARDFORK_0_20 ] = fc::time_point_sec( BRAVO_HARDFORK_0_20_TIME );
+   _hardfork_versions[ BRAVO_HARDFORK_0_20 ] = BRAVO_HARDFORK_0_20_VERSION;
 
 
    const auto& hardforks = get_hardfork_property_object();
@@ -2880,6 +2913,9 @@ void database::process_hardforks()
    {
       // If there are upcoming hardforks and the next one is later, do nothing
       const auto& hardforks = get_hardfork_property_object();
+
+      // "If" is called after the genesis block once the node is up and running
+      // "Else" is called during the genesis block generation
       if( has_hardfork( BRAVO_HARDFORK_0_19__1053 ) )
       {
          while( _hardfork_versions[ hardforks.last_hardfork ] < hardforks.next_hardfork
@@ -3145,6 +3181,22 @@ void database::apply_hardfork( uint32_t hardfork )
             {
                custom_operation test_op;
                string op_msg = "Testnet: Hardfork applied";
+               test_op.data = vector< char >(op_msg.begin(), op_msg.end());
+               test_op.required_auths.insert(BRAVO_INIT_MINER_NAME);
+               operation op = test_op;   // we need the operation object to live to the end of this scope
+               operation_notification note(op);
+               notify_pre_apply_operation(note);
+               notify_post_apply_operation(note);
+            }
+#endif
+         }
+         break;
+      case BRAVO_HARDFORK_0_20:
+         {
+#ifdef IS_TEST_NET
+            {
+               custom_operation test_op;
+               string op_msg = "Testnet: Hardfork 20 applied";
                test_op.data = vector< char >(op_msg.begin(), op_msg.end());
                test_op.required_auths.insert(BRAVO_INIT_MINER_NAME);
                operation op = test_op;   // we need the operation object to live to the end of this scope
