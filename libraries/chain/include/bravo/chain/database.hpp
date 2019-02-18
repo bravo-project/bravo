@@ -367,7 +367,6 @@ namespace bravo { namespace chain {
 
          bool apply_order( const limit_order_object& new_order_object );
          bool fill_order( const limit_order_object& order, const asset& pays, const asset& receives );
-         void cancel_order( const limit_order_object& obj );
          int  match( const limit_order_object& bid, const limit_order_object& ask, const price& trade_price );
 
          void retally_comment_children();
@@ -424,7 +423,6 @@ namespace bravo { namespace chain {
          void update_signing_witness(const witness_object& signing_witness, const signed_block& new_block);
          void update_last_irreversible_block();
          void clear_expired_transactions();
-         void clear_expired_orders();
          void process_header_extensions( const signed_block& next_block );
 
          void init_hardforks();

@@ -60,7 +60,13 @@ int main(int argc, char** argv) {
       std::cerr << "------------------------------------------------------\n\n";
       std::cerr << "            STARTING BRAVO NETWORK\n\n";
       std::cerr << "------------------------------------------------------\n";
+#ifdef FEWER_WITNESSES
+	  auto initminer_private_key = graphene::utilities::key_to_wif(BRAVO_INIT_PRIVATE_KEY);
+	  std::cerr << "initminer public key: " << BRAVO_INIT_PUBLIC_KEY_STR << "\n";
+	  std::cerr << "initminer private key: " << initminer_private_key << "\n";
+#else
       std::cerr << "initminer public key: " << BRAVO_INIT_PUBLIC_KEY_STR << "\n";
+#endif //FEWER_WITNESSES
       std::cerr << "chain id: " << std::string(BRAVO_CHAIN_ID) << "\n";
       std::cerr << "blockchain version: " << fc::string( BRAVO_BLOCKCHAIN_VERSION ) << "\n";
       std::cerr << "------------------------------------------------------\n";

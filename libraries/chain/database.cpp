@@ -1454,18 +1454,37 @@ asset database::get_generated_new_coins()
 	if (halvings > 64)
 		return asset(0, BRAVO_SYMBOL);
 
-	if (has_hardfork(BRAVO_HARDFORK_0_20))
-	{
-		// get the no. of users
-		const auto users = get_index< account_index >().indices().size();
+	// get the no. of users
+	const auto users = get_index< account_index >().indices().size();
 
+	if (has_hardfork(BRAVO_HARDFORK_0_21))
+	{
 		if (users >= BRAVO_50K_USERS)
 		{
 			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_50K;
 		} else if (users >= BRAVO_5K_USERS)
 		{
-			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_5K;
+			initial_bravo_per_block = (users * initial_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_50K) / (BRAVO_50K_USERS);
 		} else if (users >= BRAVO_500_USERS)
+		{
+			initial_bravo_per_block = (users * initial_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_5K) / (BRAVO_5K_USERS);
+		}
+		else
+		{
+			initial_bravo_per_block = (users * initial_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_500) / (BRAVO_500_USERS);
+		}
+	}
+	else if (has_hardfork(BRAVO_HARDFORK_0_20))
+	{
+		if (users >= BRAVO_50K_USERS)
+		{
+			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_50K;
+		}
+		else if (users >= BRAVO_5K_USERS)
+		{
+			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_5K;
+		}
+		else if (users >= BRAVO_500_USERS)
 		{
 			initial_bravo_per_block *= BRAVO_REWARD_MULTIPLIER_AT_500;
 		}
@@ -2220,7 +2239,6 @@ void database::_apply_block( const signed_block& next_block )
 
    create_block_summary(next_block);
    clear_expired_transactions();
-   clear_expired_orders();
    update_witness_schedule(*this);
 
    clear_null_account_balance();
@@ -2700,7 +2718,6 @@ bool database::fill_order( const limit_order_object& order, const asset& pays, c
           */
          if( order.amount_to_receive().amount == 0 )
          {
-            cancel_order(order);
             return true;
          }
          return false;
@@ -2708,13 +2725,6 @@ bool database::fill_order( const limit_order_object& order, const asset& pays, c
    }
    FC_CAPTURE_AND_RETHROW( (order)(pays)(receives) )
 }
-
-void database::cancel_order( const limit_order_object& order )
-{
-   adjust_balance( get_account(order.seller), order.amount_for_sale() );
-   remove(order);
-}
-
 
 void database::clear_expired_transactions()
 {
@@ -2724,18 +2734,6 @@ void database::clear_expired_transactions()
    const auto& dedupe_index = transaction_idx.indices().get< by_expiration >();
    while( ( !dedupe_index.empty() ) && ( head_block_time() > dedupe_index.begin()->expiration ) )
       remove( *dedupe_index.begin() );
-}
-
-void database::clear_expired_orders()
-{
-   auto now = head_block_time();
-   const auto& orders_by_exp = get_index<limit_order_index>().indices().get<by_expiration>();
-   auto itr = orders_by_exp.begin();
-   while( itr != orders_by_exp.end() && itr->expiration < now )
-   {
-      cancel_order( *itr );
-      itr = orders_by_exp.begin();
-   }
 }
 
 void database::adjust_balance( const account_object& a, const asset& delta )
@@ -2762,8 +2760,6 @@ void database::adjust_savings_balance( const account_object& a, const asset& del
       {
          case BRAVO_SYMBOL:
             acnt.savings_balance += delta;
-            break;
-         case BBD_SYMBOL:
             break;
          default:
             FC_ASSERT( !"invalid symbol" );
@@ -2899,6 +2895,9 @@ void database::init_hardforks()
    FC_ASSERT( BRAVO_HARDFORK_0_20 == 20, "Invalid hardfork configuration" );
    _hardfork_times[ BRAVO_HARDFORK_0_20 ] = fc::time_point_sec( BRAVO_HARDFORK_0_20_TIME );
    _hardfork_versions[ BRAVO_HARDFORK_0_20 ] = BRAVO_HARDFORK_0_20_VERSION;
+   FC_ASSERT(BRAVO_HARDFORK_0_21 == 21, "Invalid hardfork configuration");
+   _hardfork_times[BRAVO_HARDFORK_0_21] = fc::time_point_sec(BRAVO_HARDFORK_0_21_TIME);
+   _hardfork_versions[BRAVO_HARDFORK_0_21] = BRAVO_HARDFORK_0_21_VERSION;
 
 
    const auto& hardforks = get_hardfork_property_object();
@@ -3207,6 +3206,22 @@ void database::apply_hardfork( uint32_t hardfork )
 #endif
          }
          break;
+	  case BRAVO_HARDFORK_0_21:
+	  {
+#ifdef IS_TEST_NET
+		  {
+			  custom_operation test_op;
+			  string op_msg = "Testnet: Hardfork 21 applied";
+			  test_op.data = vector< char >(op_msg.begin(), op_msg.end());
+			  test_op.required_auths.insert(BRAVO_INIT_MINER_NAME);
+			  operation op = test_op;   // we need the operation object to live to the end of this scope
+			  operation_notification note(op);
+			  notify_pre_apply_operation(note);
+			  notify_post_apply_operation(note);
+		  }
+#endif
+	  }
+	  break;
       default:
          break;
    }
@@ -3252,7 +3267,7 @@ void database::validate_invariants()const
          total_supply += itr->savings_balance;
          total_supply += itr->reward_bravo_balance;
          total_vsf_votes += ( itr->proxy == BRAVO_PROXY_TO_SELF_ACCOUNT ?
-                                 itr->witness_vote_weight() :
+                                 itr->witness_vote_weight(has_hardfork(BRAVO_HARDFORK_0_21)) :
                                  ( BRAVO_MAX_PROXY_RECURSION_DEPTH > 0 ?
                                       itr->proxied_vsf_votes[BRAVO_MAX_PROXY_RECURSION_DEPTH - 1] :
                                       itr->balance.amount ) ); 
@@ -3398,7 +3413,7 @@ void database::retally_witness_votes()
       auto wit_itr = vidx.lower_bound( boost::make_tuple( a.id, witness_id_type() ) );
       while( wit_itr != vidx.end() && wit_itr->account == a.id )
       {
-         adjust_witness_vote( get(wit_itr->witness), a.witness_vote_weight() );
+         adjust_witness_vote( get(wit_itr->witness), a.witness_vote_weight(has_hardfork(BRAVO_HARDFORK_0_21)) );
          ++wit_itr;
       }
    }

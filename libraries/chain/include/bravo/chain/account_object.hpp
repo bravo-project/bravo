@@ -92,18 +92,18 @@ namespace bravo { namespace chain {
          time_point_sec    last_root_post = fc::time_point_sec::min();
          uint32_t          post_bandwidth = 0;
 
+         asset effective_bravo_balance() const { return balance + reward_bravo_balance;  }
          /// This function should be used only when the account votes for a witness directly
-         share_type        witness_vote_weight()const {
+         share_type        witness_vote_weight(bool bUseEffectiveBalance = false)const {
             return std::accumulate( proxied_vsf_votes.begin(),
                                     proxied_vsf_votes.end(),
-                                    balance.amount );
+									bUseEffectiveBalance ? effective_bravo_balance().amount : balance.amount );
          }
          share_type        proxied_vsf_votes_total()const {
             return std::accumulate( proxied_vsf_votes.begin(),
                                     proxied_vsf_votes.end(),
                                     share_type() );
          }
-         asset effective_bravo_balance() const { return balance + reward_bravo_balance;  }
    };
 
    class account_authority_object : public object< account_authority_object_type, account_authority_object >

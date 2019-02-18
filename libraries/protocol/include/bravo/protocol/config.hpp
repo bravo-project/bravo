@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 20, 0) )
+#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 21, 0) )
 #define BRAVO_BLOCKCHAIN_HARDFORK_VERSION     ( hardfork_version( BRAVO_BLOCKCHAIN_VERSION ) )
 
 #ifdef IS_TEST_NET
@@ -14,7 +14,6 @@
 
 #define VESTS_SYMBOL  (uint64_t(6) | (uint64_t('V') << 8) | (uint64_t('E') << 16) | (uint64_t('S') << 24) | (uint64_t('T') << 32) | (uint64_t('S') << 40)) ///< VESTS with 6 digits of precision
 #define BRAVO_SYMBOL  (uint64_t(3) | (uint64_t('T') << 8) | (uint64_t('E') << 16) | (uint64_t('S') << 24) | (uint64_t('T') << 32) | (uint64_t('S') << 40)) ///< BRAVO with 3 digits of precision
-#define BBD_SYMBOL    (uint64_t(3) | (uint64_t('T') << 8) | (uint64_t('B') << 16) | (uint64_t('D') << 24) ) ///< Test Backed Dollars with 3 digits of precision
 
 #define BRAVO_SYMBOL_TXT                      "TEST"
 #define BRAVO_ADDRESS_PREFIX                  "TST"
@@ -40,11 +39,20 @@
 #define BRAVO_OWNER_AUTH_HISTORY_TRACKING_START_BLOCK_NUM 1
 #else // IS LIVE BRAVO NETWORK
 
+#ifdef FEWER_WITNESSES
+
+#define BRAVO_INIT_PRIVATE_KEY                (fc::ecc::private_key::regenerate(fc::sha256::hash(std::string("init_key"))))
+#define BRAVO_INIT_PUBLIC_KEY_STR             (std::string( bravo::protocol::public_key_type(BRAVO_INIT_PRIVATE_KEY.get_public_key()) ))
+
+#else
+
 #define BRAVO_INIT_PUBLIC_KEY_STR             "BRV7o17Mp78B3WE3Sa1h8CK9mVNLBBN4mHuLAecUXxsb4tKCBnrHQ"
+
+#endif // FEWER_WITNESSES
+
 #define BRAVO_CHAIN_ID                        (bravo::protocol::chain_id_type())
 #define VESTS_SYMBOL  (uint64_t(6) | (uint64_t('V') << 8) | (uint64_t('E') << 16) | (uint64_t('S') << 24) | (uint64_t('T') << 32) | (uint64_t('S') << 40)) ///< VESTS with 6 digits of precision
 #define BRAVO_SYMBOL  (uint64_t(3) | (uint64_t('B') << 8) | (uint64_t('R') << 16) | (uint64_t('A') << 24) | (uint64_t('V') << 32) | (uint64_t('O') << 40)) ///< BRAVO with 3 digits of precision
-#define BBD_SYMBOL    (uint64_t(3) | (uint64_t('B') << 8) | (uint64_t('B') << 16) | (uint64_t('D') << 24) ) ///< BRAVO Backed Dollars with 3 digits of precision
 #define BRAVO_SYMBOL_TXT                      "BRAVO"
 #define BRAVO_ADDRESS_PREFIX                  "BRV"
 
@@ -86,8 +94,8 @@
 
 // These values have been lowered to make testing easier
 #define BRAVO_500_USERS                       7
-#define BRAVO_5K_USERS                        8
-#define BRAVO_50K_USERS                       9
+#define BRAVO_5K_USERS                        10
+#define BRAVO_50K_USERS                       15
 
 #else // the usual witness requirements
 

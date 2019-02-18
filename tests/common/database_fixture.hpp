@@ -131,23 +131,53 @@ extern uint32_t ( BRAVO_TESTING_GENESIS_TIMESTAMP );
    asset::from_string( s )
 
 
-#define CHECK_REWARD(total_users, reward_multiplier)                                                     \
-{                                                                                                        \
-   auto users = db.get_index< account_index >().indices().size();                                        \
-   uint32_t halvings = db.head_block_num() / BRAVO_MINED_COIN_HALVED_BLOCK;                              \
-   uint32_t basic_bravo_per_block = BRAVO_INIT_MINED_COIN_PER_BLOCK;                                     \
-                                                                                                         \
-   /* ensure there are (total_users) no. of users in the db */                                           \
-   for (int i = users; i < (total_users); ++i)                                                           \
-      account_create( BRAVO_INIT_MINER_NAME + fc::to_string( i ), init_account_pub_key );                \
-                                                                                                         \
-   BOOST_REQUIRE(db.get_index< account_index >().indices().size() == (total_users));                     \
-   generate_block();                                                                                     \
-                                                                                                         \
-   /* calculate the expected reward and check against the db */                                          \
-   uint32_t expected_reward = (basic_bravo_per_block * (reward_multiplier)) >> halvings;                 \
-   if (halvings > 64) expected_reward = 0;                                                               \
-   BOOST_REQUIRE( db.get_dynamic_global_properties().current_block_reward.amount == expected_reward);    \
+#define CHECK_REWARD(total_users)																				\
+{																												\
+	BOOST_TEST_MESSAGE( "Checking rewards with total users: " << total_users );									\
+	auto users = db.get_index< account_index >().indices().size();												\
+	uint32_t halvings = db.head_block_num() / BRAVO_MINED_COIN_HALVED_BLOCK;									\
+	uint32_t basic_bravo_per_block = BRAVO_INIT_MINED_COIN_PER_BLOCK;											\
+																												\
+	/* ensure there are (total_users) no. of users in the db */													\
+	for (int i = users; i < (total_users); ++i)																	\
+		account_create( BRAVO_INIT_MINER_NAME + fc::to_string( i ), init_account_pub_key );						\
+																												\
+	BOOST_REQUIRE(db.get_index< account_index >().indices().size() == (total_users));							\
+	generate_block();																							\
+	users = db.get_index< account_index >().indices().size();													\
+																												\
+	/* calculate the expected reward and check against the db */												\
+	uint32_t expected_reward = basic_bravo_per_block;															\
+																												\
+	if (db.has_hardfork(BRAVO_HARDFORK_0_21)) {																	\
+		if (users >= BRAVO_50K_USERS) {																			\
+			expected_reward = basic_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_50K;							\
+		}																										\
+		else if (users >= BRAVO_5K_USERS) {																		\
+			expected_reward = (users * basic_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_50K) / (BRAVO_50K_USERS);	\
+		}																										\
+		else if (users >= BRAVO_500_USERS) {																	\
+			expected_reward = (users * basic_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_5K) / (BRAVO_5K_USERS);	\
+		}																										\
+		else {																									\
+			expected_reward = (users * basic_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_500) / (BRAVO_500_USERS);	\
+		}                                                                                                       \
+	}																										    \
+	else if(db.has_hardfork(BRAVO_HARDFORK_0_20)) {																\
+		if (users >= BRAVO_50K_USERS) {                                                                         \
+			expected_reward = basic_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_50K;							\
+		}																									    \
+		else if (users >= BRAVO_5K_USERS) {                                                                     \
+			expected_reward = basic_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_5K;	                        \
+		}																										\
+		else if (users >= BRAVO_500_USERS) {                                                                    \
+			expected_reward = basic_bravo_per_block * BRAVO_REWARD_MULTIPLIER_AT_500;	                        \
+		}                                                                                                       \
+	}																											\
+	expected_reward >>= halvings;																				\
+	if (halvings > 64) expected_reward = 0;																		\
+	asset expected_asset = asset(expected_reward, BRAVO_SYMBOL);												\
+	BOOST_REQUIRE( db.get_dynamic_global_properties().current_block_reward == expected_asset);					\
 }
 
 namespace bravo { namespace chain {

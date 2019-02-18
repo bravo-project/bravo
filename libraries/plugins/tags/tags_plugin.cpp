@@ -391,7 +391,7 @@ struct operation_visitor
 
    void operator()( const transfer_operation& op )const
    {
-      if( op.to == BRAVO_NULL_ACCOUNT && op.amount.symbol == BBD_SYMBOL )
+      if( op.to == BRAVO_NULL_ACCOUNT && op.amount.symbol == BRAVO_SYMBOL )
       {
          vector<string> part; part.reserve(4);
          auto path = op.memo;

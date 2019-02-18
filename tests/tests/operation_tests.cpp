@@ -1715,6 +1715,7 @@ BOOST_AUTO_TEST_CASE( account_witness_vote_apply )
       fund( "alice" , 5000 );
       vest( "alice", 5000 );
       fund( "sam", 1000 );
+	  fund( "bob", 2000 );
 
       private_key_type sam_witness_key = generate_private_key( "sam_key" );
       witness_create( "sam", sam_private_key, "foo.bar", sam_witness_key.get_public_key(), 1000 );
@@ -1766,7 +1767,7 @@ BOOST_AUTO_TEST_CASE( account_witness_vote_apply )
 
       db.push_transaction( tx, 0 );
 
-      BOOST_REQUIRE( sam_witness.votes == ( bob.proxied_vsf_votes_total() ) );
+      BOOST_REQUIRE( sam_witness.votes == ( bob.proxied_vsf_votes_total() + bob.effective_bravo_balance().amount ) );
       BOOST_REQUIRE( witness_vote_idx.find( std::make_tuple( sam_witness.id, bob.id ) ) != witness_vote_idx.end() );
       BOOST_REQUIRE( witness_vote_idx.find( std::make_tuple( sam_witness.id, alice.id ) ) == witness_vote_idx.end() );
 
@@ -1778,7 +1779,7 @@ BOOST_AUTO_TEST_CASE( account_witness_vote_apply )
       tx.sign( alice_private_key, db.get_chain_id() );
       BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), fc::exception );
 
-      BOOST_REQUIRE( sam_witness.votes == ( bob.proxied_vsf_votes_total() ) );
+      BOOST_REQUIRE( sam_witness.votes == ( bob.proxied_vsf_votes_total() + bob.effective_bravo_balance().amount) );
       BOOST_REQUIRE( witness_vote_idx.find( std::make_tuple( sam_witness.id, bob.id ) ) != witness_vote_idx.end() );
       BOOST_REQUIRE( witness_vote_idx.find( std::make_tuple( sam_witness.id, alice.id ) ) == witness_vote_idx.end() );
 
@@ -2131,220 +2132,6 @@ BOOST_AUTO_TEST_CASE( convert_validate )
    try
    {
       BOOST_TEST_MESSAGE( "Testing: convert_validate" );
-   }
-   FC_LOG_AND_RETHROW()
-}
-
-BOOST_AUTO_TEST_CASE( limit_order_create_validate )
-{
-   try
-   {
-      BOOST_TEST_MESSAGE( "Testing: limit_order_create_validate" );
-   }
-   FC_LOG_AND_RETHROW()
-}
-
-BOOST_AUTO_TEST_CASE( limit_order_create_authorities )
-{
-   try
-   {
-      BOOST_TEST_MESSAGE( "Testing: limit_order_create_authorities" );
-
-      ACTORS( (alice)(bob) )
-      fund( "alice", 10000 );
-
-      limit_order_create_operation op;
-      op.owner = "alice";
-      op.amount_to_sell = ASSET( "1.000 TESTS" );
-      op.min_to_receive = ASSET( "1.000 TBD" );
-
-      signed_transaction tx;
-      tx.operations.push_back( op );
-      tx.set_expiration( db.head_block_time() + BRAVO_MAX_TIME_UNTIL_EXPIRATION );
-
-      BOOST_TEST_MESSAGE( "--- Test failure when no signature." );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_missing_active_auth );
-
-      BOOST_TEST_MESSAGE( "--- Test success with account signature" );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      db.push_transaction( tx, database::skip_transaction_dupe_check );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with duplicate signature" );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_duplicate_sig );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with additional incorrect signature" );
-      tx.signatures.clear();
-      tx.sign( alice_private_key, db.get_chain_id() );
-      tx.sign( bob_private_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_irrelevant_sig );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with incorrect signature" );
-      tx.signatures.clear();
-      tx.sign( alice_post_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_missing_active_auth );
-
-      validate_database();
-   }
-   FC_LOG_AND_RETHROW()
-}
-
-BOOST_AUTO_TEST_CASE( limit_order_create2_authorities )
-{
-   try
-   {
-      BOOST_TEST_MESSAGE( "Testing: limit_order_create2_authorities" );
-
-      ACTORS( (alice)(bob) )
-      fund( "alice", 10000 );
-
-      limit_order_create2_operation op;
-      op.owner = "alice";
-      op.amount_to_sell = ASSET( "1.000 TESTS" );
-      op.exchange_rate = price( ASSET( "1.000 TESTS" ), ASSET( "1.000 TBD" ) );
-
-      signed_transaction tx;
-      tx.operations.push_back( op );
-      tx.set_expiration( db.head_block_time() + BRAVO_MAX_TIME_UNTIL_EXPIRATION );
-
-      BOOST_TEST_MESSAGE( "--- Test failure when no signature." );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_missing_active_auth );
-
-      BOOST_TEST_MESSAGE( "--- Test success with account signature" );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      db.push_transaction( tx, database::skip_transaction_dupe_check );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with duplicate signature" );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_duplicate_sig );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with additional incorrect signature" );
-      tx.signatures.clear();
-      tx.sign( alice_private_key, db.get_chain_id() );
-      tx.sign( bob_private_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_irrelevant_sig );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with incorrect signature" );
-      tx.signatures.clear();
-      tx.sign( alice_post_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_missing_active_auth );
-
-      validate_database();
-   }
-   FC_LOG_AND_RETHROW()
-}
-
-BOOST_AUTO_TEST_CASE( limit_order_cancel_validate )
-{
-   try
-   {
-      BOOST_TEST_MESSAGE( "Testing: limit_order_cancel_validate" );
-   }
-   FC_LOG_AND_RETHROW()
-}
-
-BOOST_AUTO_TEST_CASE( limit_order_cancel_authorities )
-{
-   try
-   {
-      BOOST_TEST_MESSAGE( "Testing: limit_order_cancel_authorities" );
-
-      ACTORS( (alice)(bob) )
-      fund( "alice", 10000 );
-
-      limit_order_create_operation c;
-      c.owner = "alice";
-      c.orderid = 1;
-      c.amount_to_sell = ASSET( "1.000 TESTS" );
-      c.min_to_receive = ASSET( "1.000 TBD" );
-
-      signed_transaction tx;
-      tx.operations.push_back( c );
-      tx.set_expiration( db.head_block_time() + BRAVO_MAX_TIME_UNTIL_EXPIRATION );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      db.push_transaction( tx, 0 );
-
-      limit_order_cancel_operation op;
-      op.owner = "alice";
-      op.orderid = 1;
-
-      tx.operations.clear();
-      tx.signatures.clear();
-      tx.operations.push_back( op );
-
-      BOOST_TEST_MESSAGE( "--- Test failure when no signature." );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_missing_active_auth );
-
-      BOOST_TEST_MESSAGE( "--- Test success with account signature" );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      db.push_transaction( tx, database::skip_transaction_dupe_check );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with duplicate signature" );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_duplicate_sig );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with additional incorrect signature" );
-      tx.signatures.clear();
-      tx.sign( alice_private_key, db.get_chain_id() );
-      tx.sign( bob_private_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_irrelevant_sig );
-
-      BOOST_TEST_MESSAGE( "--- Test failure with incorrect signature" );
-      tx.signatures.clear();
-      tx.sign( alice_post_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, database::skip_transaction_dupe_check ), tx_missing_active_auth );
-
-      validate_database();
-   }
-   FC_LOG_AND_RETHROW()
-}
-
-BOOST_AUTO_TEST_CASE( limit_order_cancel_apply )
-{
-   try
-   {
-      BOOST_TEST_MESSAGE( "Testing: limit_order_cancel_apply" );
-
-      ACTORS( (alice) )
-      fund( "alice", 10000 );
-
-      const auto& limit_order_idx = db.get_index< limit_order_index >().indices().get< by_account >();
-
-      BOOST_TEST_MESSAGE( "--- Test cancel non-existent order" );
-
-      limit_order_cancel_operation op;
-      signed_transaction tx;
-
-      op.owner = "alice";
-      op.orderid = 5;
-      tx.operations.push_back( op );
-      tx.set_expiration( db.head_block_time() + BRAVO_MAX_TIME_UNTIL_EXPIRATION );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      BRAVO_REQUIRE_THROW( db.push_transaction( tx, 0 ), fc::exception );
-
-      BOOST_TEST_MESSAGE( "--- Test cancel order" );
-
-      limit_order_create_operation create;
-      create.owner = "alice";
-      create.orderid = 5;
-      create.amount_to_sell = ASSET( "5.000 TESTS" );
-      create.min_to_receive = ASSET( "7.500 TBD" );
-      tx.operations.clear();
-      tx.signatures.clear();
-      tx.operations.push_back( create );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      db.push_transaction( tx, 0 );
-
-      BOOST_REQUIRE( limit_order_idx.find( std::make_tuple( "alice", 5 ) ) != limit_order_idx.end() );
-
-      tx.operations.clear();
-      tx.signatures.clear();
-      tx.operations.push_back( op );
-      tx.sign( alice_private_key, db.get_chain_id() );
-      db.push_transaction( tx, 0 );
-
-      BOOST_REQUIRE( limit_order_idx.find( std::make_tuple( "alice", 5 ) ) == limit_order_idx.end() );
-      BOOST_REQUIRE( alice.balance.amount.value == ASSET( "10.000 TESTS" ).amount.value );
    }
    FC_LOG_AND_RETHROW()
 }
@@ -4082,11 +3869,6 @@ BOOST_AUTO_TEST_CASE( transfer_to_savings_validate )
       BRAVO_REQUIRE_THROW( op.validate(), fc::exception );
 
 
-      BOOST_TEST_MESSAGE( "success when amount is SBD" );
-      op.amount = ASSET( "1.000 TBD" );
-      op.validate();
-
-
       BOOST_TEST_MESSAGE( "success when amount is BRAVO" );
       op.amount = ASSET( "1.000 TESTS" );
       op.validate();
@@ -4228,11 +4010,6 @@ BOOST_AUTO_TEST_CASE( transfer_from_savings_validate )
       op.to = "alice";
       op.amount = ASSET( "1.000 VESTS" );
       BRAVO_REQUIRE_THROW( op.validate(), fc::exception );
-
-
-      BOOST_TEST_MESSAGE( "success when amount is SBD" );
-      op.amount = ASSET( "1.000 TBD" );
-      op.validate();
 
 
       BOOST_TEST_MESSAGE( "success when amount is BRAVO" );

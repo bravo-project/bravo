@@ -324,23 +324,11 @@ namespace bravo { namespace protocol {
 
    void limit_order_create_operation::validate()const
    {
-      validate_account_name( owner );
-      FC_ASSERT( ( is_asset_type( amount_to_sell, BRAVO_SYMBOL ) && is_asset_type( min_to_receive, BBD_SYMBOL ) )
-         || ( is_asset_type( amount_to_sell, BBD_SYMBOL ) && is_asset_type( min_to_receive, BRAVO_SYMBOL ) ),
-         "Limit order must be for the BRAVO:SBD market" );
-      (amount_to_sell / min_to_receive).validate();
+	   FC_ASSERT(false, "limit_order_create_operation is disabled.");
    }
    void limit_order_create2_operation::validate()const
    {
-      validate_account_name( owner );
-      FC_ASSERT( amount_to_sell.symbol == exchange_rate.base.symbol, "Sell asset must be the base of the price" );
-      exchange_rate.validate();
-
-      FC_ASSERT( ( is_asset_type( amount_to_sell, BRAVO_SYMBOL ) && is_asset_type( exchange_rate.quote, BBD_SYMBOL ) ) ||
-                 ( is_asset_type( amount_to_sell, BBD_SYMBOL ) && is_asset_type( exchange_rate.quote, BRAVO_SYMBOL ) ),
-                 "Limit order must be for the BRAVO:SBD market" );
-
-      FC_ASSERT( (amount_to_sell * exchange_rate).amount > 0, "Amount to sell cannot round to 0 when traded" );
+	   FC_ASSERT(false, "limit_order_create2_operation is disabled.");
    }
 
    void limit_order_cancel_operation::validate()const
@@ -350,11 +338,7 @@ namespace bravo { namespace protocol {
 
    void convert_operation::validate()const
    {
-      validate_account_name( owner );
-      /// only allow conversion from SBD to BRAVO, allowing the opposite can enable traders to abuse
-      /// market fluxuations through converting large quantities without moving the price.
-      FC_ASSERT( is_asset_type( amount, BBD_SYMBOL ), "Can only convert SBD to BRAVO" );
-      FC_ASSERT( amount.amount > 0, "Must convert some SBD" );
+	   FC_ASSERT(false, "convert_operation is disabled.");
    }
 
    void report_over_production_operation::validate()const
@@ -376,7 +360,7 @@ namespace bravo { namespace protocol {
       FC_ASSERT( bravo_amount.amount >= 0, "bravo amount cannot be negative" );
       FC_ASSERT( bravo_amount.amount > 0, "escrow must transfer a non-zero amount" );
       FC_ASSERT( from != agent && to != agent, "agent must be a third party" );
-      FC_ASSERT( (fee.symbol == BRAVO_SYMBOL) || (fee.symbol == BBD_SYMBOL), "fee must be BRAVO or SBD" );
+      FC_ASSERT( fee.symbol == BRAVO_SYMBOL, "fee must be BRAVO or SBD" );
       FC_ASSERT( bravo_amount.symbol == BRAVO_SYMBOL, "bravo amount must contain BRAVO" );
       FC_ASSERT( ratification_deadline < escrow_expiration, "ratification deadline must be before escrow expiration" );
       if ( json_meta.size() > 0 )
@@ -446,7 +430,7 @@ namespace bravo { namespace protocol {
       validate_account_name( from );
       validate_account_name( to );
       FC_ASSERT( amount.amount > 0 );
-      FC_ASSERT( amount.symbol == BRAVO_SYMBOL || amount.symbol == BBD_SYMBOL );
+      FC_ASSERT( amount.symbol == BRAVO_SYMBOL );
       FC_ASSERT( memo.size() < BRAVO_MAX_MEMO_SIZE, "Memo is too large" );
       FC_ASSERT( fc::is_utf8( memo ), "Memo is not UTF8" );
    }
@@ -454,7 +438,7 @@ namespace bravo { namespace protocol {
       validate_account_name( from );
       validate_account_name( to );
       FC_ASSERT( amount.amount > 0 );
-      FC_ASSERT( amount.symbol == BRAVO_SYMBOL || amount.symbol == BBD_SYMBOL );
+      FC_ASSERT( amount.symbol == BRAVO_SYMBOL );
       FC_ASSERT( memo.size() < BRAVO_MAX_MEMO_SIZE, "Memo is too large" );
       FC_ASSERT( fc::is_utf8( memo ), "Memo is not UTF8" );
    }

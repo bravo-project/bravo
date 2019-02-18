@@ -701,7 +701,7 @@ BOOST_FIXTURE_TEST_CASE( skip_block, clean_database_fixture )
    FC_LOG_AND_RETHROW();
 }
 
-// Checks if hardfork 20 is applied
+// Checks if hardfork 21 is applied
 BOOST_FIXTURE_TEST_CASE( hardfork_test, database_fixture )
 {
    try
@@ -729,7 +729,7 @@ BOOST_FIXTURE_TEST_CASE( hardfork_test, database_fixture )
          open_database();
 
          generate_block();
-         db.set_hardfork(BRAVO_HARDFORK_0_19);
+         db.set_hardfork(BRAVO_HARDFORK_0_20);
          generate_block();
 
          ahplugin->plugin_startup();
@@ -753,14 +753,14 @@ BOOST_FIXTURE_TEST_CASE( hardfork_test, database_fixture )
       }
 
       BOOST_TEST_MESSAGE( "Check hardfork not applied at genesis" );
-      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_19) );
-      BOOST_REQUIRE( !db.has_hardfork(BRAVO_HARDFORK_0_20) );
+      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_20) );
+      BOOST_REQUIRE( !db.has_hardfork(BRAVO_HARDFORK_0_21) );
 
       BOOST_TEST_MESSAGE( "Generate blocks up to the hardfork time and check hardfork still not applied" );
-      generate_blocks( fc::time_point_sec(BRAVO_HARDFORK_0_20_TIME - BRAVO_BLOCK_INTERVAL ), true );
+      generate_blocks( fc::time_point_sec(BRAVO_HARDFORK_0_21_TIME - BRAVO_BLOCK_INTERVAL ), true );
 
-      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_19) );
-      BOOST_REQUIRE( !db.has_hardfork(BRAVO_HARDFORK_0_20) );
+      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_20) );
+      BOOST_REQUIRE( !db.has_hardfork(BRAVO_HARDFORK_0_21) );
 
       BOOST_TEST_MESSAGE( "Generate a block and check hardfork is applied" );
 
@@ -769,23 +769,23 @@ BOOST_FIXTURE_TEST_CASE( hardfork_test, database_fixture )
       for (int i = 0; i < (BRAVO_MAX_WITNESSES * 2) + 1; ++i)
       {
          generate_block();
-         if (db.has_hardfork(BRAVO_HARDFORK_0_20)) break; // This ensures that the last operation has the right message (op_msg)
+         if (db.has_hardfork(BRAVO_HARDFORK_0_21)) break; // This ensures that the last operation has the right message (op_msg)
       }
 
-      string op_msg = "Testnet: Hardfork 20 applied";
+      string op_msg = "Testnet: Hardfork 21 applied";
       auto itr = db.get_index< account_history_index >().indices().get< by_id >().end();
       itr--;
 
-      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_19) );
       BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_20) );
+      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_21) );
       BOOST_REQUIRE( db.get(itr->op).timestamp == db.head_block_time() ); 
       BOOST_REQUIRE( get_last_operations( 1 )[0].get< custom_operation >().data == vector< char >( op_msg.begin(), op_msg.end() ) );
 
       BOOST_TEST_MESSAGE( "Testing hardfork is only applied once" );
       generate_block();
 
-      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_19) );
       BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_20) );
+      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_21) );
 
       // if hardfork 20 is not applied twice then itr->op timestamp should remain unchanged 
       BOOST_REQUIRE( db.get(itr->op).timestamp == db.head_block_time() - BRAVO_BLOCK_INTERVAL );
@@ -822,7 +822,7 @@ BOOST_FIXTURE_TEST_CASE( block_reward_multiplication_test, database_fixture )
          open_database(std::max((BRAVO_50K_USERS / 1000) * eight_megs, eight_megs));
 
          generate_block();
-         db.set_hardfork(BRAVO_HARDFORK_0_20);
+         db.set_hardfork(BRAVO_HARDFORK_0_21);
          generate_block();
 
          ahplugin->plugin_startup();
@@ -838,16 +838,21 @@ BOOST_FIXTURE_TEST_CASE( block_reward_multiplication_test, database_fixture )
       }
 
 
-      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_20) );
+      BOOST_REQUIRE( db.has_hardfork(BRAVO_HARDFORK_0_21) );
 
       BOOST_TEST_MESSAGE( "Testing reward increment." );
       auto users = db.get_index< account_index >().indices().size();
-      BOOST_REQUIRE_MESSAGE(users < BRAVO_500_USERS, "Current no. of users should not be more than BRAVO_500_USERS");
-      
-      // Add users and check if reward increases accordingly
-      CHECK_REWARD(BRAVO_500_USERS, BRAVO_REWARD_MULTIPLIER_AT_500);
-      CHECK_REWARD(BRAVO_5K_USERS, BRAVO_REWARD_MULTIPLIER_AT_5K);
-      CHECK_REWARD(BRAVO_50K_USERS, BRAVO_REWARD_MULTIPLIER_AT_50K);
+
+	  // Add users and check if reward increases accordingly
+	  CHECK_REWARD(250);
+	  CHECK_REWARD(500);
+	  CHECK_REWARD(775);
+	  CHECK_REWARD(4999);
+	  CHECK_REWARD(5000);
+	  CHECK_REWARD(10890);
+	  CHECK_REWARD(49999);
+	  CHECK_REWARD(50000);
+	  CHECK_REWARD(50005);
    }
    FC_LOG_AND_RETHROW()
 }

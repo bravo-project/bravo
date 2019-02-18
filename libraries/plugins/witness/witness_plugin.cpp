@@ -556,7 +556,7 @@ block_production_condition::block_production_condition_enum witness_plugin::bloc
          dlog("Not producing block because it isn't my turn");
          break;
       case block_production_condition::not_time_yet:
-         dlog("Not producing block because slot has not yet arrived");
+         //dlog("Not producing block because slot has not yet arrived");
          break;
       case block_production_condition::no_private_key:
          ilog("Not producing block for ${scheduled_witness} because I don't have the private key for ${scheduled_key}", (capture) );

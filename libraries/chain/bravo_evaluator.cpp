@@ -398,7 +398,7 @@ void comment_evaluator::do_apply( const comment_operation& o )
             from_string( com.parent_permlink, o.parent_permlink );
             from_string( com.category, o.parent_permlink );
             com.root_comment = com.id;
-			}
+		 }
          else
          {
             com.parent_author = parent->author;
@@ -765,7 +765,10 @@ void account_witness_proxy_evaluator::do_apply( const account_witness_proxy_oper
 
    /// remove all current votes
    std::array<share_type, BRAVO_MAX_PROXY_RECURSION_DEPTH+1> delta;
-   //delta[0] = -account.vesting_shares.amount;
+
+   if (_db.has_hardfork(BRAVO_HARDFORK_0_21))
+		delta[0] = -account.effective_bravo_balance().amount;
+
    for( int i = 0; i < BRAVO_MAX_PROXY_RECURSION_DEPTH; ++i )
       delta[i+1] = -account.proxied_vsf_votes[i];
    _db.adjust_proxied_witness_votes( account, delta );
@@ -826,7 +829,7 @@ void account_witness_vote_evaluator::do_apply( const account_witness_vote_operat
              v.account = voter.id;
          });
 
-         _db.adjust_witness_vote( witness, voter.witness_vote_weight() );
+         _db.adjust_witness_vote( witness, voter.witness_vote_weight(_db.has_hardfork(BRAVO_HARDFORK_0_21)));
 
       _db.modify( voter, [&]( account_object& a ) {
          a.witnesses_voted_for++;
@@ -835,7 +838,7 @@ void account_witness_vote_evaluator::do_apply( const account_witness_vote_operat
    } else {
       FC_ASSERT( !o.approve, "Vote currently exists, user must indicate a desire to reject witness." );
 
-      _db.adjust_witness_vote( witness, -voter.witness_vote_weight() );
+      _db.adjust_witness_vote( witness, -voter.witness_vote_weight(_db.has_hardfork(BRAVO_HARDFORK_0_21)) );
       _db.modify( voter, [&]( account_object& a ) {
          a.witnesses_voted_for--;
       });
@@ -1354,27 +1357,7 @@ void convert_evaluator::do_apply( const convert_operation& o )
 
 void limit_order_create_evaluator::do_apply( const limit_order_create_operation& o )
 {
-   FC_ASSERT( o.expiration > _db.head_block_time(), "Limit order has to expire after head block time." );
-
-   const auto& owner = _db.get_account( o.owner );
-
-   FC_ASSERT( _db.get_balance( owner, o.amount_to_sell.symbol ) >= o.amount_to_sell, "Account does not have sufficient funds for limit order." );
-
-   _db.adjust_balance( owner, -o.amount_to_sell );
-
-   const auto& order = _db.create<limit_order_object>( [&]( limit_order_object& obj )
-   {
-       obj.created    = _db.head_block_time();
-       obj.seller     = o.owner;
-       obj.orderid    = o.orderid;
-       obj.for_sale   = o.amount_to_sell.amount;
-       obj.sell_price = o.get_price();
-       obj.expiration = o.expiration;
-   });
-
-   bool filled = _db.apply_order( order );
-
-   if( o.fill_or_kill ) FC_ASSERT( filled, "Cancelling order because it was not filled." );
+	FC_ASSERT(false, "limit_order_create_operation is disabled.");
 }
 
 void limit_order_create2_evaluator::do_apply( const limit_order_create2_operation& o )
@@ -1404,7 +1387,7 @@ void limit_order_create2_evaluator::do_apply( const limit_order_create2_operatio
 
 void limit_order_cancel_evaluator::do_apply( const limit_order_cancel_operation& o )
 {
-   _db.cancel_order( _db.get_limit_order( o.owner, o.orderid ) );
+	FC_ASSERT(false, "limit_order_cancel_operation is disabled.");
 }
 
 void report_over_production_evaluator::do_apply( const report_over_production_operation& o )
