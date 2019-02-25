@@ -1,4 +1,4 @@
-# Bravo - The Decentralized Consumer Review Blockchain That Pays Its Community
+## Bravo - The Decentralized Consumer Review Blockchain That Pays Its Community
 
 Welcome to the official repository for Bravo, the review blockchain that pays its community!
 

@@ -121,6 +121,7 @@ namespace bravo { namespace chain {
          const witness_object*  find_witness( const account_name_type& name )const;
 
          const account_object&  get_account(  const account_name_type& name )const;
+		 const account_object&  get_account(const account_id_type& id)const;
          const account_object*  find_account( const account_name_type& name )const;
 
          const comment_object&  get_comment(  const account_name_type& author, const shared_string& permlink )const;

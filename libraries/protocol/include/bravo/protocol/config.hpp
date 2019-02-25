@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 21, 0) )
+#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 22, 0) )
 #define BRAVO_BLOCKCHAIN_HARDFORK_VERSION     ( hardfork_version( BRAVO_BLOCKCHAIN_VERSION ) )
 
 #ifdef IS_TEST_NET

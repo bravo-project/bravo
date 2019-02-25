@@ -827,6 +827,8 @@ void account_witness_vote_evaluator::do_apply( const account_witness_vote_operat
          _db.create<witness_vote_object>( [&]( witness_vote_object& v ) {
              v.witness = witness.id;
              v.account = voter.id;
+			 if (_db.has_hardfork(BRAVO_HARDFORK_0_22))
+				v.weight = voter.witness_vote_weight(_db.has_hardfork(BRAVO_HARDFORK_0_21));
          });
 
          _db.adjust_witness_vote( witness, voter.witness_vote_weight(_db.has_hardfork(BRAVO_HARDFORK_0_21)));
@@ -838,7 +840,11 @@ void account_witness_vote_evaluator::do_apply( const account_witness_vote_operat
    } else {
       FC_ASSERT( !o.approve, "Vote currently exists, user must indicate a desire to reject witness." );
 
-      _db.adjust_witness_vote( witness, -voter.witness_vote_weight(_db.has_hardfork(BRAVO_HARDFORK_0_21)) );
+	  if (_db.has_hardfork(BRAVO_HARDFORK_0_22))
+		_db.adjust_witness_vote( witness, -itr->weight);
+	  else
+		_db.adjust_witness_vote(witness, -voter.witness_vote_weight(_db.has_hardfork(BRAVO_HARDFORK_0_21)));
+
       _db.modify( voter, [&]( account_object& a ) {
          a.witnesses_voted_for--;
       });

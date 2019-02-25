@@ -134,6 +134,7 @@ namespace bravo { namespace chain {
 
          witness_id_type   witness;
          account_id_type   account;
+		 share_type weight = 0;
    };
 
    class witness_schedule_object : public object< witness_schedule_object_type, witness_schedule_object >
@@ -250,7 +251,7 @@ FC_REFLECT( bravo::chain::witness_object,
           )
 CHAINBASE_SET_INDEX_TYPE( bravo::chain::witness_object, bravo::chain::witness_index )
 
-FC_REFLECT( bravo::chain::witness_vote_object, (id)(witness)(account) )
+FC_REFLECT( bravo::chain::witness_vote_object, (id)(witness)(account)(weight) )
 CHAINBASE_SET_INDEX_TYPE( bravo::chain::witness_vote_object, bravo::chain::witness_vote_index )
 
 FC_REFLECT( bravo::chain::witness_schedule_object,

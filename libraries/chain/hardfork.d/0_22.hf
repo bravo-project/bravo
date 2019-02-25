@@ -1,0 +1,8 @@
+#ifndef BRAVO_HARDFORK_0_22
+#define BRAVO_HARDFORK_0_22 22
+
+// Monday, Feb 25 2019 11:00:00 UTC
+#define BRAVO_HARDFORK_0_22_TIME 1551092400
+#define BRAVO_HARDFORK_0_22_VERSION hardfork_version( 0, 22 )
+
+#endif

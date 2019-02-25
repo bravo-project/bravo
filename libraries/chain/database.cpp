@@ -150,7 +150,7 @@ void database::reindex( const fc::path& data_dir, const fc::path& shared_mem_dir
    {
       ilog( "Reindexing Blockchain" );
       wipe( data_dir, shared_mem_dir, false );
-      open( data_dir, shared_mem_dir, 0, shared_file_size, chainbase::database::read_write );
+      open( data_dir, shared_mem_dir, BRAVO_INIT_SUPPLY, shared_file_size, chainbase::database::read_write );
       _fork_db.reset();    // override effect of _fork_db.start_block() call in open()
 
       auto start = fc::time_point::now();
@@ -363,6 +363,13 @@ const account_object& database::get_account( const account_name_type& name )cons
 { try {
    return get< account_object, by_name >( name );
 } FC_CAPTURE_AND_RETHROW( (name) ) }
+
+const account_object& database::get_account(const account_id_type& id)const
+{
+	try {
+		return get< account_object, by_id >(id);
+	} FC_CAPTURE_AND_RETHROW((id))
+}
 
 const account_object* database::find_account( const account_name_type& name )const
 {
@@ -1076,7 +1083,12 @@ void database::adjust_witness_vote( const witness_object& witness, share_type de
       w.virtual_position += delta_pos;
 
       w.virtual_last_update = wso.current_virtual_time;
-      w.votes += delta;
+
+	  if (has_hardfork(BRAVO_HARDFORK_0_22))
+	     w.votes = std::max((w.votes + delta), (share_type) 0);
+	  else 
+		 w.votes += delta;
+
       w.virtual_scheduled_time = w.virtual_last_update + (VIRTUAL_SCHEDULE_LAP_LENGTH2 - w.virtual_position)/(w.votes.value+1);
       
       /** witnesses with a low number of votes could overflow the time field and end up with a scheduled time in the past */
@@ -2898,7 +2910,9 @@ void database::init_hardforks()
    FC_ASSERT(BRAVO_HARDFORK_0_21 == 21, "Invalid hardfork configuration");
    _hardfork_times[BRAVO_HARDFORK_0_21] = fc::time_point_sec(BRAVO_HARDFORK_0_21_TIME);
    _hardfork_versions[BRAVO_HARDFORK_0_21] = BRAVO_HARDFORK_0_21_VERSION;
-
+   FC_ASSERT(BRAVO_HARDFORK_0_22 == 22, "Invalid hardfork configuration");
+   _hardfork_times[BRAVO_HARDFORK_0_22] = fc::time_point_sec(BRAVO_HARDFORK_0_22_TIME);
+   _hardfork_versions[BRAVO_HARDFORK_0_22] = BRAVO_HARDFORK_0_22_VERSION;
 
    const auto& hardforks = get_hardfork_property_object();
    FC_ASSERT( hardforks.last_hardfork <= BRAVO_NUM_HARDFORKS, "Chain knows of more hardforks than configuration", ("hardforks.last_hardfork",hardforks.last_hardfork)("BRAVO_NUM_HARDFORKS",BRAVO_NUM_HARDFORKS) );
@@ -3222,6 +3236,34 @@ void database::apply_hardfork( uint32_t hardfork )
 #endif
 	  }
 	  break;
+	  case BRAVO_HARDFORK_0_22:
+	  {
+#ifdef IS_TEST_NET
+		  {
+			  custom_operation test_op;
+			  string op_msg = "Testnet: Hardfork 22 applied";
+			  test_op.data = vector< char >(op_msg.begin(), op_msg.end());
+			  test_op.required_auths.insert(BRAVO_INIT_MINER_NAME);
+			  operation op = test_op;   // we need the operation object to live to the end of this scope
+			  operation_notification note(op);
+			  notify_pre_apply_operation(note);
+			  notify_post_apply_operation(note);
+		  }
+#endif
+		  /**
+		   * Add votes weight of existing witness votes.
+		   */
+		  const auto& witness_vote_idx = get_index< witness_vote_index >().indices().get< by_account_witness >();
+		  for (auto itr = witness_vote_idx.begin(); itr != witness_vote_idx.end(); ++itr) {
+			  const auto& acc = get_account(itr->account);
+			  // set weight based on the existing balance of account
+			  modify(*itr, [&](witness_vote_object& v) {
+				  v.weight = acc.witness_vote_weight(true);
+			  });
+		  }
+	  }
+	  break;
+
       default:
          break;
    }

@@ -77,6 +77,10 @@ if [[ ! -d $HOME/blockchain ]]; then
     fi
 fi
 
+if [[ "$REPLAY_BLOCKCHAIN" ]]; then
+	ARGS+=" --replay-blockchain "
+fi
+
 # without --data-dir it uses cwd as datadir(!)
 # who knows what else it dumps into current dir
 cd $HOME
