@@ -1131,7 +1131,19 @@ void vote_evaluator::do_apply( const vote_operation& o )
 
 } FC_CAPTURE_AND_RETHROW( (o)) }
 
-void custom_evaluator::do_apply( const custom_operation& o ){}
+void custom_evaluator::do_apply( const custom_operation& o )
+{
+	FC_ASSERT(o.required_auths.size() > 0, "at least one account required to authentiate");
+
+	for (const auto& si : o.required_auths) {
+		const auto& signer = _db.get_account(si);
+		FC_ASSERT(signer.balance.amount.value >= BRAVO_CUSTOME_OP_FEE, "Insufficient balance to submit custome operation.", ("signer.balance", signer.balance)("required", asset(BRAVO_CUSTOME_OP_FEE, BRAVO_SYMBOL)));
+		asset fee = asset(BRAVO_CUSTOME_OP_FEE, BRAVO_SYMBOL); // 0.001 BRAVO
+		_db.modify(signer, [&](account_object& c) {
+			c.balance -= fee;
+		});
+	}
+}
 
 void custom_json_evaluator::do_apply( const custom_json_operation& o )
 {

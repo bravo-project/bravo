@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 22, 0) )
+#define BRAVO_BLOCKCHAIN_VERSION              ( version(0, 23, 0) )
 #define BRAVO_BLOCKCHAIN_HARDFORK_VERSION     ( hardfork_version( BRAVO_BLOCKCHAIN_VERSION ) )
 
 #ifdef IS_TEST_NET
@@ -163,7 +163,9 @@
 #define BRAVO_1_PERCENT                       (BRAVO_100_PERCENT/100)
 #define BRAVO_1_TENTH_PERCENT                 (BRAVO_100_PERCENT/1000)
 
-#define BRAVO_CONTENT_REWARD_PERCENT          (75*BRAVO_1_PERCENT) //75% of inflation, 7.125% inflation
+#define BRAVO_CONTENT_REWARD_PERCENT          (75*BRAVO_1_PERCENT)
+#define BRAVO_CONTENT_REWARD_PERCENT_HF23     (90*BRAVO_1_PERCENT)
+#define BRAVO_CUSTOME_OP_FEE                  1
 
 #define BRAVO_NEW_ACCOUNT_CREATION_SHARE        (80*BRAVO_1_PERCENT) //80% of account creation fee will be added to new account reward balance
 

@@ -1530,7 +1530,7 @@ void database::process_funds()
    const auto& wso = get_witness_schedule_object();
 
    auto new_bravo = get_generated_new_coins().amount;
-   auto content_reward = (new_bravo * BRAVO_CONTENT_REWARD_PERCENT) / BRAVO_100_PERCENT;
+   auto content_reward = (new_bravo * (has_hardfork(BRAVO_HARDFORK_0_23) ? BRAVO_CONTENT_REWARD_PERCENT_HF23 : BRAVO_CONTENT_REWARD_PERCENT)) / BRAVO_100_PERCENT;
    content_reward = pay_reward_funds( content_reward ); /// 85% to content creator
     
    auto witness_reward = new_bravo - content_reward; /// Remaining 15% to witness pay
@@ -2913,6 +2913,9 @@ void database::init_hardforks()
    FC_ASSERT(BRAVO_HARDFORK_0_22 == 22, "Invalid hardfork configuration");
    _hardfork_times[BRAVO_HARDFORK_0_22] = fc::time_point_sec(BRAVO_HARDFORK_0_22_TIME);
    _hardfork_versions[BRAVO_HARDFORK_0_22] = BRAVO_HARDFORK_0_22_VERSION;
+   FC_ASSERT(BRAVO_HARDFORK_0_23 == 23, "Invalid hardfork configuration");
+   _hardfork_times[BRAVO_HARDFORK_0_23] = fc::time_point_sec(BRAVO_HARDFORK_0_23_TIME);
+   _hardfork_versions[BRAVO_HARDFORK_0_23] = BRAVO_HARDFORK_0_23_VERSION;
 
    const auto& hardforks = get_hardfork_property_object();
    FC_ASSERT( hardforks.last_hardfork <= BRAVO_NUM_HARDFORKS, "Chain knows of more hardforks than configuration", ("hardforks.last_hardfork",hardforks.last_hardfork)("BRAVO_NUM_HARDFORKS",BRAVO_NUM_HARDFORKS) );
@@ -3261,6 +3264,23 @@ void database::apply_hardfork( uint32_t hardfork )
 				  v.weight = acc.witness_vote_weight(true);
 			  });
 		  }
+	  }
+	  break;
+
+	  case BRAVO_HARDFORK_0_23:
+	  {
+#ifdef IS_TEST_NET
+		  {
+			  custom_operation test_op;
+			  string op_msg = "Testnet: Hardfork 23 applied";
+			  test_op.data = vector< char >(op_msg.begin(), op_msg.end());
+			  test_op.required_auths.insert(BRAVO_INIT_MINER_NAME);
+			  operation op = test_op;   // we need the operation object to live to the end of this scope
+			  operation_notification note(op);
+			  notify_pre_apply_operation(note);
+			  notify_post_apply_operation(note);
+		  }
+#endif
 	  }
 	  break;
 
